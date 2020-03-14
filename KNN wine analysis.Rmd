@@ -1,0 +1,126 @@
+---
+title: "Zadanie KNN"
+author: "Magdalena Opielińska"
+date: "14 02 2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+chooseCRANmirror(graphics=FALSE, ind=1)
+knitr::opts_chunk$set(echo = TRUE)
+library(asbio)
+library(tidyverse)
+dane <- read.csv('http://mlr.cs.umass.edu/ml/machine-learning-databases/cpu-performance/machine.data')
+```
+
+
+```{r}
+#1
+
+data("wine")
+```
+
+```{r}
+#2
+
+wine.class <- wine[,1]
+wine.data <- wine[,-1]
+```
+
+
+```{r}
+
+
+#3
+
+hist(wine.class)
+
+```
+
+
+```{r}
+#4
+
+wine.data <- scale(wine.data, center = TRUE, scale = TRUE)
+```
+
+```{r}
+#5
+
+set.seed(123)
+inx <- sample(nrow(wine), 4000)
+wine.train.data <- wine.data[inx, ]
+
+```
+```{r}
+
+#6
+
+wine.test.data <- wine.data[-inx, ]
+
+```
+
+```{r}
+
+#7
+
+wine.train.class <- wine.class[inx]
+wine.test.class <- wine.class[-inx]
+```
+
+```{r}
+
+#8
+
+library(class)
+wine_knn <- function(k) {
+        wine_pred <- knn(wine.train.data, wine.test.data, wine.train.class, k=7)
+        accuracy <- mean(wine_pred == wine.test.class)
+        return(accuracy)
+}
+
+```
+```{r}
+#9
+
+k.values <- 1:10
+accuracy_1_10 <- sapply(1:10, wine_knn, simplify = TRUE, USE.NAMES = TRUE)
+plot(accuracy_1_10)
+
+max_val <- max(accuracy_1_10)
+sprintf('Najlepszą klasyfikację otrzymujemy dla k :%f value: %f', max_val, which(accuracy_1_10 == max_val))
+
+```
+
+```{r}
+
+#Implementacja klasyfikatora KNN
+
+my_knn <- function (x, x_klas, K) {
+  odl_euk <- apply(wine.train.data,1,
+             function(v){sqrt(sum(x-v)^2)})
+  top_k <- which(rank(odl_euk) <= K)
+  getmode <- function(v) {
+    uniqv <- unique(v)
+    uniqv[which.max(tabulate(match(v, uniqv)))]
+  }
+  ccc <- wine.train.class[top_k]
+  getmode(ccc)
+}
+
+K = 7
+
+
+x <- wine.test.data[1, ]
+my_knn(x, wine.test.class, K)
+
+```
+
+
+

@@ -1,0 +1,127 @@
+---
+title: "Zadanie 2.2"
+author: "Magdalena Opielińska"
+date: "14 02 2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r}
+
+#1
+chooseCRANmirror(graphics=FALSE, ind=1)
+knitr::opts_chunk$set(echo = TRUE)
+dane <- read.csv("http://mlr.cs.umass.edu/ml/machine-learning-databases/cpu-performance/machine.data")
+head(dane)
+colnames(dane) <- c("vendor name","Model Name","MYCT","MMIN","MMAX","CACH","CHMIN","CHMAX","PRP","ERP")
+
+```
+
+```{r}
+#2
+
+anyNA(dane)
+no.question.mark <- apply(dane, 1, function(r) !any(r %in% ' ?'))
+no.question.mark
+
+```
+
+```{r}
+#3
+
+install.packages("ggplot2")
+library(ggplot2)
+library(dplyr)
+vendors <- as.data.frame(table(dane$`vendor name`))
+colnames(vendors) <-c("vendor name", "freq")
+head(vendors)
+vendors <- vendors[order(vendors$freq, decreasing = TRUE),]
+barplot(vendors$freq, names.arg = vendors$`vendor name`, las = 2, col = 'royalblue', density = 69, main = 'Producenci CPU')
+
+
+```
+
+```{r}
+#4
+
+
+# MYCT histogram 
+
+factor(dane$MYCT)
+table(dane$MYCT)
+MYCT <- dane$MYCT
+
+hist(MYCT, breaks = 50, col = 'red3', main = 'MYCT histogram')
+
+```
+```{r}
+# histogram prezentujący wielkość MMIN i MMAX na jednym wykresie
+
+MMIN <- aggregate(dane$MMIN, list(dane$`vendor name`), mean)
+MMAX <- aggregate(dane$MMAX, list(dane$`vendor name`), mean)
+colnames(MMIN) <- c('vendor', 'value')
+colnames(MMAX) <- c('vendor', 'value')
+MMIN$type <- 'mmin'
+MMAX$type <- 'mmax'
+chart_data <- rbind(MMIN, MMAX)
+
+ggplot(chart_data, aes(fill=type, y=value, x=vendor)) +  geom_bar(position="dodge", stat="identity",) + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+```
+
+
+```{r}
+#5
+
+# procentowy udział procesorów z CHMAX większym niż 12 w grupach wyodrębnionych ze względu na producenta
+
+chmax_12 <- filter(dane, CHMAX > 12)
+count <- aggregate(chmax_12$`vendor name`, list(chmax_12$`vendor name`), FUN = NROW)
+procent <- mutate(count, 
+                  procent = round(count$x/nrow(chmax_12)*100))
+colnames(procent) <- c('Producent', 'Ilość', 'Procent %')
+procent 
+
+```
+
+
+```{r}
+#6
+
+# Firmy produkujące procesory z CHMIN woększym niż 16
+
+chmin_16 <- filter(dane, CHMIN > 16)
+nrow(chmin_16)
+chmin_16
+
+```
+```{r}
+
+# ERP dla 4 producentów, którzy produkują najwięcej typów CPU
+library(tidyr)
+
+top_4 <- data.frame(sort(table(dane$'vendor name'),decreasing=TRUE)[1:4])
+top_4
+producenci <- subset(dane, dane$'vendor name' %in% top_4$Var1)
+producenci
+producenci <- subset(dane, dane$'vendor name' %in% top_4$Var1)
+total <- NROW(producenci)
+producenci <- aggregate(producenci$'vendor name', list(producenci$'vendor name', producenci$ERP), FUN = NROW)
+colnames(producenci) <- c('vendor', 'ERP', 'Count')
+producenci$frequency <- producenci$Count * 100 / total
+producenci
+
+ggplot(data.frame(producenci$vendor), aes(x=producenci$vendor)) + geom_bar() + theme(axis.text.x = element_text(angle = 1, hjust = 1)) + ggtitle("ERP wśród top 4 producentóW") +
+  xlab("Producenci")
+
+```
+
+
+
+
